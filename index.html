@@ -1,0 +1,834 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>2016 Timeline</title>
+  <meta name="description" content="Interactive timeline of 2016: memes, trends, news, and moments." />
+
+  <style>
+    :root{
+      --bg:#070A10;
+      --panel:#0D1220;
+      --panel2:#0A0F1C;
+      --text:#E9ECF6;
+      --muted:#A6AFCC;
+      --line:#243055;
+      --accent:#7C5CFF;
+      --accent2:#2EE6A6;
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+      --radius: 18px;
+    }
+
+    *{ box-sizing: border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: radial-gradient(1200px 700px at 30% 10%, rgba(124,92,255,.25), transparent 60%),
+                  radial-gradient(1000px 600px at 80% 30%, rgba(46,230,166,.16), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+    }
+
+    a{ color:inherit; }
+    .wrap{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 28px 18px 64px;
+    }
+
+    header{
+      display:flex;
+      gap:16px;
+      align-items:flex-end;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      margin-bottom: 18px;
+    }
+    .brand{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .title{
+      font-size: clamp(26px, 3.2vw, 42px);
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      margin:0;
+    }
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      max-width: 62ch;
+    }
+
+    .pillbar{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .pill{
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 999px;
+      padding: 10px 12px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      box-shadow: 0 8px 30px rgba(0,0,0,.22);
+      backdrop-filter: blur(8px);
+    }
+    .pill label{
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .pill select, .pill input{
+      appearance:none;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      outline:none;
+      font-size: 14px;
+    }
+    .pill input::placeholder{ color: rgba(166,175,204,.7); }
+    .pill .dot{
+      width:10px;height:10px;border-radius:999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(124,92,255,.18);
+    }
+
+    .panel{
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.025));
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .panelTop{
+      padding: 16px 16px 10px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: linear-gradient(180deg, rgba(10,15,28,.92), rgba(10,15,28,.60));
+    }
+    .hint{
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .btn{
+      cursor:pointer;
+      border: 1px solid rgba(255,255,255,.12);
+      background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.04));
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+      user-select:none;
+    }
+    .btn:hover{
+      transform: translateY(-1px);
+      border-color: rgba(124,92,255,.35);
+      background: linear-gradient(180deg, rgba(124,92,255,.22), rgba(255,255,255,.04));
+    }
+
+    .timelineViewport{
+      position: relative;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 20px 16px 18px;
+      background: linear-gradient(180deg, rgba(13,18,32,.35), rgba(7,10,16,.10));
+      scroll-behavior: smooth;
+    }
+
+    .timelineCanvas{
+      position: relative;
+      min-width: 1400px;
+      height: 360px;
+      padding-top: 22px;
+      padding-bottom: 10px;
+    }
+
+    .line{
+      position:absolute;
+      left: 0;
+      right: 0;
+      top: 220px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--line), transparent);
+    }
+
+    .tick{
+      position:absolute;
+      top: 205px;
+      width: 1px;
+      height: 40px;
+      background: rgba(255,255,255,.10);
+    }
+    .tickLabel{
+      position:absolute;
+      top: 252px;
+      transform: translateX(-50%);
+      color: rgba(166,175,204,.9);
+      font-size: 12px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .eventIcon{
+      position:absolute;
+      top: 74px;
+      transform: translateX(-50%);
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      padding: 6px;
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03));
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 14px 40px rgba(0,0,0,.45);
+      cursor:pointer;
+      transition: transform .12s ease, border-color .12s ease;
+      backdrop-filter: blur(6px);
+    }
+    .eventIcon:hover{
+      transform: translateX(-50%) scale(1.12);
+      border-color: rgba(46,230,166,.35);
+    }
+    .eventIcon img{
+      width:100%;
+      height:100%;
+      object-fit: contain;
+      display:block;
+      border-radius: 10px;
+    }
+
+    .tooltip{
+      position:absolute;
+      left: 50%;
+      bottom: 54px;
+      transform: translateX(-50%);
+      background: rgba(5,7,12,.92);
+      border: 1px solid rgba(255,255,255,.12);
+      padding: 10px 10px;
+      border-radius: 12px;
+      min-width: 220px;
+      max-width: 280px;
+      box-shadow: 0 16px 60px rgba(0,0,0,.55);
+      opacity: 0;
+      pointer-events:none;
+      transition: opacity .12s ease;
+    }
+    .eventIcon:hover .tooltip{ opacity: 1; }
+    .ttTitle{
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: -.01em;
+      margin: 0 0 4px 0;
+    }
+    .ttMeta{
+      margin:0;
+      color: var(--muted);
+      font-size: 12px;
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .badge{
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(233,236,246,.92);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .scrub{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      padding: 12px 16px;
+      border-top: 1px solid rgba(255,255,255,.08);
+      background: linear-gradient(180deg, rgba(10,15,28,.72), rgba(10,15,28,.55));
+    }
+    input[type="range"]{
+      width: 100%;
+      accent-color: var(--accent);
+    }
+    .scrubMeta{
+      width: 160px;
+      text-align:right;
+      color: var(--muted);
+      font-size: 12px;
+      white-space:nowrap;
+    }
+
+    .modalOverlay{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.64);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 50;
+    }
+    .modalOverlay.open{ display:flex; }
+    .modal{
+      width: min(960px, 100%);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(13,18,32,.96), rgba(7,10,16,.92));
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 26px 90px rgba(0,0,0,.70);
+      overflow:hidden;
+    }
+    .modalHead{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      padding: 16px 16px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+    }
+    .modalTitle{
+      margin:0;
+      font-size: 18px;
+      letter-spacing: -.02em;
+    }
+    .modalMeta{
+      margin-top: 6px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .closeX{
+      cursor:pointer;
+      border:none;
+      background: transparent;
+      color: rgba(233,236,246,.85);
+      font-size: 22px;
+      padding: 6px 10px;
+      line-height:1;
+      border-radius: 10px;
+    }
+    .closeX:hover{
+      background: rgba(255,255,255,.06);
+    }
+    .modalBody{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 0;
+    }
+    @media (max-width: 860px){
+      .modalBody{ grid-template-columns: 1fr; }
+      .scrubMeta{ display:none; }
+    }
+    .media{
+      background: radial-gradient(700px 420px at 30% 10%, rgba(124,92,255,.20), transparent 58%),
+                  radial-gradient(700px 420px at 70% 30%, rgba(46,230,166,.14), transparent 58%),
+                  rgba(0,0,0,.25);
+      padding: 14px;
+      min-height: 320px;
+    }
+    .mediaInner{
+      width: 100%;
+      aspect-ratio: 16/9;
+      border-radius: 18px;
+      overflow:hidden;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.35);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .mediaInner img, .mediaInner video, .mediaInner iframe{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border:0;
+    }
+    .side{
+      padding: 14px 16px 16px;
+      border-left: 1px solid rgba(255,255,255,.08);
+      background: linear-gradient(180deg, rgba(10,15,28,.42), rgba(10,15,28,.18));
+    }
+    @media (max-width: 860px){
+      .side{ border-left:none; border-top: 1px solid rgba(255,255,255,.08); }
+    }
+    .desc{
+      margin: 0 0 12px 0;
+      color: rgba(233,236,246,.92);
+      line-height: 1.55;
+      font-size: 14px;
+    }
+    .source{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      text-decoration:none;
+      transition: transform .12s ease, border-color .12s ease;
+    }
+    .source:hover{
+      transform: translateY(-1px);
+      border-color: rgba(124,92,255,.35);
+    }
+    .source small{ color: var(--muted); display:block; margin-top:2px; }
+
+    footer{
+      margin-top: 14px;
+      color: rgba(166,175,204,.75);
+      font-size: 12px;
+    }
+    code.inline{
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+      padding: 2px 6px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <h1 class="title">2016 Timeline</h1>
+        <p class="subtitle">One year. Internet chaos. Hover the icons, click to open a moment.</p>
+      </div>
+
+      <div class="pillbar">
+        <div class="pill">
+          <span class="dot" aria-hidden="true"></span>
+          <label for="typeFilter">Filter</label>
+          <select id="typeFilter">
+            <option value="all">All</option>
+          </select>
+        </div>
+
+        <div class="pill">
+          <label for="searchInput">Search</label>
+          <input id="searchInput" type="text" placeholder="Try: Pokémon, meme, news..." />
+        </div>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="panelTop">
+        <div class="hint">Drag/scroll horizontally • Use the scrub slider • Click an icon to open details</div>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <div class="btn" id="jumpJan">Jump: Jan</div>
+          <div class="btn" id="jumpDec">Jump: Dec</div>
+        </div>
+      </div>
+
+      <div class="timelineViewport" id="viewport">
+        <div class="timelineCanvas" id="canvas">
+          <div class="line" aria-hidden="true"></div>
+        </div>
+      </div>
+
+      <div class="scrub">
+        <input id="scrubRange" type="range" min="0" max="365" value="0" />
+        <div class="scrubMeta" id="scrubMeta">Jan 01, 2016</div>
+      </div>
+    </section>
+
+    <footer>
+      Add events by editing <code class="inline">/data/events.json</code> and uploading your PNGs to <code class="inline">/assets/icons</code>.
+    </footer>
+  </div>
+
+  <div class="modalOverlay" id="modalOverlay" role="dialog" aria-modal="true" aria-label="Event details">
+    <div class="modal" role="document">
+      <div class="modalHead">
+        <div>
+          <h2 class="modalTitle" id="mTitle">Title</h2>
+          <div class="modalMeta" id="mMeta"></div>
+        </div>
+        <button class="closeX" id="mClose" aria-label="Close">×</button>
+      </div>
+
+      <div class="modalBody">
+        <div class="media">
+          <div class="mediaInner" id="mMedia"></div>
+        </div>
+        <div class="side">
+          <p class="desc" id="mDesc"></p>
+          <a class="source" id="mSource" href="#" target="_blank" rel="noopener">
+            <div>
+              <strong>Open source</strong>
+              <small id="mSourceUrl"></small>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /******************************************************************
+     * 2016 TIMELINE — JSON-DRIVEN CORE
+     * - Add new events by editing /data/events.json
+     * - Upload icons to /assets/icons and media to /assets/media
+     ******************************************************************/
+
+    const START = new Date("2016-01-01T00:00:00Z");
+    const END   = new Date("2016-12-31T00:00:00Z");
+    const DAYS_IN_2016 = 366; // leap year
+    const EVENTS_URL = "data/events.json";
+    const FALLBACK_ICON = "assets/icons/placeholder.png";
+
+    let events = [];
+
+    const $ = (s, el=document) => el.querySelector(s);
+
+    const viewport = $("#viewport");
+    const canvas = $("#canvas");
+
+    const typeFilter = $("#typeFilter");
+    const searchInput = $("#searchInput");
+    const scrubRange = $("#scrubRange");
+    const scrubMeta = $("#scrubMeta");
+
+    const modalOverlay = $("#modalOverlay");
+    const mTitle = $("#mTitle");
+    const mMeta = $("#mMeta");
+    const mMedia = $("#mMedia");
+    const mDesc = $("#mDesc");
+    const mSource = $("#mSource");
+    const mSourceUrl = $("#mSourceUrl");
+    const mClose = $("#mClose");
+
+    // --- Date helpers ---
+    function parseDateYMD(ymd){
+      return new Date(ymd + "T00:00:00Z"); // UTC to avoid timezone shifts
+    }
+
+    function dayIndex(dateObj){
+      const ms = dateObj.getTime() - START.getTime();
+      const days = Math.floor(ms / (24*60*60*1000));
+      return Math.max(0, Math.min(DAYS_IN_2016-1, days));
+    }
+
+    function formatDate(dateObj){
+      return dateObj.toLocaleDateString(undefined, { year:"numeric", month:"short", day:"2-digit", timeZone:"UTC" });
+    }
+
+    function monthStartIndexes(){
+      const months = [];
+      for(let m=0; m<12; m++){
+        const d = new Date(Date.UTC(2016, m, 1));
+        months.push({
+          idx: dayIndex(d),
+          label: d.toLocaleDateString(undefined, { month:"short", timeZone:"UTC" })
+        });
+      }
+      return months;
+    }
+
+    function leftPercentForIndex(idx){
+      return (idx / (DAYS_IN_2016-1)) * 100;
+    }
+
+    // --- Load + validate JSON ---
+    async function fetchEvents(){
+      const res = await fetch(EVENTS_URL, { cache: "no-store" });
+      if(!res.ok) throw new Error(`Failed to load ${EVENTS_URL} (HTTP ${res.status})`);
+      const data = await res.json();
+      if(!Array.isArray(data)) throw new Error("events.json must be an array");
+      return data;
+    }
+
+    function normalizeEvents(raw){
+      const allowedMedia = new Set(["image", "video", "youtube", "iframe"]);
+      const out = [];
+      const seenIds = new Set();
+
+      for(const e of raw){
+        if(!e || typeof e !== "object") continue;
+
+        const id = String(e.id || "").trim();
+        const date = String(e.date || "").trim();
+        const title = String(e.title || "").trim();
+        if(!id || !date || !title) continue;
+        if(seenIds.has(id)) continue;
+        if(!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+
+        const d = parseDateYMD(date);
+        if(Number.isNaN(d.getTime())) continue;
+        if(d < START || d > END) continue;
+
+        const type = String(e.type || "event").trim() || "event";
+        const icon = String(e.icon || "").trim();
+
+        let mediaType = String(e.mediaType || "image").trim().toLowerCase();
+        if(!allowedMedia.has(mediaType)) mediaType = "image";
+
+        const mediaSrc = String(e.mediaSrc || "").trim();
+        const description = String(e.description || "").trim();
+        const sourceUrl = String(e.sourceUrl || "").trim();
+
+        out.push({
+          id, date, title, type,
+          icon: icon || FALLBACK_ICON,
+          mediaType,
+          mediaSrc: mediaSrc || icon || FALLBACK_ICON,
+          description,
+          sourceUrl
+        });
+
+        seenIds.add(id);
+      }
+
+      out.sort((a,b) => parseDateYMD(a.date) - parseDateYMD(b.date));
+      return out;
+    }
+
+    // --- Layout helpers ---
+    function assignLanes(list){
+      const lanes = 5;
+      return list
+        .slice()
+        .sort((a,b) => parseDateYMD(a.date) - parseDateYMD(b.date))
+        .map((e,i) => ({...e, lane: i % lanes}));
+    }
+
+    function buildTypeFilter(list){
+      const set = new Set(list.map(e => e.type).filter(Boolean));
+      const types = ["all", ...Array.from(set).sort()];
+      typeFilter.innerHTML = types.map(t => `<option value="${t}">${t === "all" ? "All" : t}</option>`).join("");
+    }
+
+    function renderTicks(){
+      const months = monthStartIndexes();
+      months.forEach(m => {
+        const left = leftPercentForIndex(m.idx);
+
+        const tick = document.createElement("div");
+        tick.className = "tick";
+        tick.style.left = left + "%";
+
+        const lab = document.createElement("div");
+        lab.className = "tickLabel";
+        lab.style.left = left + "%";
+        lab.textContent = m.label;
+
+        canvas.appendChild(tick);
+        canvas.appendChild(lab);
+      });
+    }
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function renderEvents(list){
+      canvas.innerHTML = `<div class="line" aria-hidden="true"></div>`;
+      renderTicks();
+
+      const withLanes = assignLanes(list);
+
+      withLanes.forEach(e => {
+        const d = parseDateYMD(e.date);
+        const idx = dayIndex(d);
+        const left = leftPercentForIndex(idx);
+
+        const icon = document.createElement("div");
+        icon.className = "eventIcon";
+        icon.style.left = left + "%";
+        icon.style.top = (74 + e.lane * 26) + "px";
+        icon.setAttribute("data-id", e.id);
+
+        const img = document.createElement("img");
+        img.src = e.icon;
+        img.alt = e.title;
+        img.loading = "lazy";
+        img.onerror = () => { img.src = FALLBACK_ICON; };
+
+        const tt = document.createElement("div");
+        tt.className = "tooltip";
+        tt.innerHTML = `
+          <p class="ttTitle">${escapeHtml(e.title)}</p>
+          <p class="ttMeta">
+            <span class="badge">${escapeHtml(e.type || "event")}</span>
+            <span>${formatDate(d)}</span>
+          </p>
+        `;
+
+        icon.appendChild(img);
+        icon.appendChild(tt);
+        icon.addEventListener("click", () => openModal(e));
+
+        canvas.appendChild(icon);
+      });
+    }
+
+    // --- Modal ---
+    function openModal(e){
+      const d = parseDateYMD(e.date);
+      mTitle.textContent = e.title;
+      mMeta.innerHTML = `
+        <span class="badge">${escapeHtml(e.type || "event")}</span>
+        <span>${formatDate(d)}</span>
+      `;
+      mDesc.textContent = e.description || "";
+
+      if(e.sourceUrl){
+        mSource.href = e.sourceUrl;
+        mSourceUrl.textContent = e.sourceUrl;
+        mSource.style.display = "flex";
+      }else{
+        mSource.style.display = "none";
+      }
+
+      mMedia.innerHTML = "";
+
+      if(e.mediaType === "youtube" || e.mediaType === "iframe"){
+        const iframe = document.createElement("iframe");
+        iframe.src = e.mediaSrc;
+        iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+        iframe.allowFullscreen = true;
+        mMedia.appendChild(iframe);
+      }else if(e.mediaType === "video"){
+        const video = document.createElement("video");
+        video.src = e.mediaSrc;
+        video.controls = true;
+        video.playsInline = true;
+        mMedia.appendChild(video);
+      }else{
+        const img = document.createElement("img");
+        img.src = e.mediaSrc || e.icon || FALLBACK_ICON;
+        img.alt = e.title;
+        img.loading = "lazy";
+        img.onerror = () => { img.src = FALLBACK_ICON; };
+        mMedia.appendChild(img);
+      }
+
+      modalOverlay.classList.add("open");
+      document.body.style.overflow = "hidden";
+      history.replaceState(null, "", `#event=${encodeURIComponent(e.id)}`);
+    }
+
+    function closeModal(){
+      modalOverlay.classList.remove("open");
+      document.body.style.overflow = "";
+      history.replaceState(null, "", "#");
+      mMedia.innerHTML = "";
+    }
+
+    modalOverlay.addEventListener("click", (ev) => {
+      if(ev.target === modalOverlay) closeModal();
+    });
+    mClose.addEventListener("click", closeModal);
+    window.addEventListener("keydown", (e) => {
+      if(e.key === "Escape" && modalOverlay.classList.contains("open")) closeModal();
+    });
+
+    // --- Filtering/search ---
+    function applyFilters(){
+      const typeVal = typeFilter.value;
+      const q = searchInput.value.trim().toLowerCase();
+
+      const filtered = events.filter(e => {
+        const matchesType = (typeVal === "all") ? true : (e.type === typeVal);
+        if(!matchesType) return false;
+        if(!q) return true;
+        const hay = `${e.title} ${e.description || ""} ${e.type || ""}`.toLowerCase();
+        return hay.includes(q);
+      });
+
+      renderEvents(filtered);
+    }
+
+    typeFilter.addEventListener("change", applyFilters);
+    searchInput.addEventListener("input", () => {
+      window.clearTimeout(searchInput._t);
+      searchInput._t = window.setTimeout(applyFilters, 80);
+    });
+
+    // --- Scrub control ---
+    function setScrubLabel(idx){
+      const d = new Date(START.getTime() + idx * 24*60*60*1000);
+      scrubMeta.textContent = formatDate(d);
+    }
+
+    function scrollToDayIndex(idx){
+      const ratio = idx / (DAYS_IN_2016-1);
+      const maxScroll = viewport.scrollWidth - viewport.clientWidth;
+      viewport.scrollLeft = maxScroll * ratio;
+    }
+
+    scrubRange.addEventListener("input", () => {
+      const idx = Number(scrubRange.value);
+      setScrubLabel(idx);
+      scrollToDayIndex(idx);
+    });
+
+    viewport.addEventListener("scroll", () => {
+      const maxScroll = viewport.scrollWidth - viewport.clientWidth;
+      if(maxScroll <= 0) return;
+      const ratio = viewport.scrollLeft / maxScroll;
+      const idx = Math.round(ratio * (DAYS_IN_2016-1));
+      scrubRange.value = idx;
+      setScrubLabel(idx);
+    });
+
+    $("#jumpJan").addEventListener("click", () => scrollToDayIndex(0));
+    $("#jumpDec").addEventListener("click", () => scrollToDayIndex(DAYS_IN_2016-1));
+
+    function openFromHash(){
+      const h = location.hash || "";
+      const m = h.match(/#event=([^&]+)/);
+      if(!m) return;
+      const id = decodeURIComponent(m[1]);
+      const e = events.find(x => x.id === id);
+      if(e) openModal(e);
+    }
+
+    // Init
+    async function load(){
+      try{
+        const raw = await fetchEvents();
+        events = normalizeEvents(raw);
+
+        buildTypeFilter(events);
+        renderEvents(events);
+        setScrubLabel(0);
+        openFromHash();
+      }catch(err){
+        console.error(err);
+        buildTypeFilter([]);
+        renderEvents([]);
+        setScrubLabel(0);
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>
